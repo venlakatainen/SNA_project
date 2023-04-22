@@ -137,6 +137,31 @@ def draw_power_laws(in_deg, out_deg, avg_deg):
     plt.title('Avg degree power-law distribution')
     
 
+
+def loglogplot(in_deg):
+    # calculate how many node have same degree
+    in_deg_count = []
+    nodes = []
+    degree = []
+   
+    for i in range(len(in_deg)):
+        in_deg_count.append(in_deg[i][1])
+        nodes.append(in_deg[i][0])
+        degree.append(in_deg[i][1])
+        
+    in_deg_counter = Counter(in_deg_count)
+    print(in_deg_counter.keys())
+    print(in_deg_counter.values())
+    # plot the figure
+    plt.figure(5)
+    #plt.scatter(degree, nodes)
+    plt.loglog(in_deg_counter.keys(), in_deg_counter.values(), label="loglog")
+    plt.xlabel('degree')
+    plt.ylabel('number of nodes')
+    plt.title('LogLog Distribution of in-degree') 
+        
+        
+        
 # read csv
 df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
 
@@ -162,6 +187,8 @@ in_deg, out_deg, avg_deg = get_degrees(G)
 # draw power-law figures
 draw_power_laws(in_deg, out_deg, avg_deg)
 
+loglogplot(in_deg)
+
 #degree_sequence = sorted((d for n, d in out_deg), reverse=True)
 #fit = powerlaw.Fit(degree_sequence)
 """
@@ -173,3 +200,11 @@ Calculating best minimal value for power law fit
 plt.show()
 
 quit()
+
+#edges_as_list = edg.values.tolist()
+#nodes_as_list = nod.values.tolist()
+#print(edges_as_list) 
+
+#graph=draw_graph(edges_as_list, nodes_as_list)
+# display graph
+#nx.draw_networkx(graph)
