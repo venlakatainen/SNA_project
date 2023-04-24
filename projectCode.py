@@ -7,6 +7,10 @@ import numpy as np
 import csv
 import powerlaw
 from collections import Counter
+from sklearn import preprocessing, svm
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+
 
 # read data
 
@@ -20,7 +24,7 @@ def get_twitter_data():
 
 # draw graph 
 
-def draw_graph(edgelist):
+def make_graph(edgelist):
     # draw graph from given edgelist
     G = nx.from_pandas_edgelist(edgelist, 'Follower', 'Target', create_using=nx.DiGraph())
     # return created graph
@@ -150,18 +154,88 @@ def loglogplot(in_deg):
         degree.append(in_deg[i][1])
         
     in_deg_counter = Counter(in_deg_count)
-    print(in_deg_counter.keys())
-    print(in_deg_counter.values())
+
     # plot the figure
     plt.figure(5)
-    #plt.scatter(degree, nodes)
     plt.loglog(in_deg_counter.keys(), in_deg_counter.values(), label="loglog")
+    plt.xlabel('Log(degree)')
+    plt.ylabel('Log(number of nodes)')
+    plt.title('LogLog Distribution of in-degree') 
+    
+    # linear regression
+    linear_regr = LinearRegression()
+    x = np.reshape(list(in_deg_counter.keys()),(-1,1))
+    y = np.reshape(list(in_deg_counter.values()),(-1,1))
+    linear_regr.fit(x, y)
+    y_regr = linear_regr.predict(y)
+    plt.figure(6)
     plt.xlabel('degree')
     plt.ylabel('number of nodes')
-    plt.title('LogLog Distribution of in-degree') 
+    plt.title('Linear regression of loglog distribution') 
+    plt.scatter(x, y, alpha=0.95, color ='b')
+    plt.plot(x, y_regr, color ='k')
         
-        
-        
+
+def top_edge_betweenness(graph):
+    #Calculates the top five edges with the highest edge betweenness scores
+    print("Edge betweenness")
+    edge_betweenness = nx.edge_betweenness_centrality(graph)
+    top_edges = sorted(edge_betweenness.items(), key=lambda x: x[1], reverse=True)[:5]
+    return top_edges
+
+
+
+def top_node_betweenness(graph):
+    #Calculates the top ten nodes with the highest node betweenness scores
+    print("Node betweenness")
+    node_betweenness = nx.betweenness_centrality(graph)
+    top_nodes = sorted(node_betweenness.items(), key=lambda x: x[1], reverse=True)[:10]
+    return top_nodes
+
+
+
+def plot_clustering_coefficient_distribution(graph, num_bins=10):
+    # compute the clustering coefficient for each node
+    clustering = nx.clustering(graph)
+
+    # create a histogram with the specified number of bins
+    plt.hist(list(clustering.values()), bins=num_bins)
+    plt.title("Distribution of Clustering Coefficients")
+    plt.xlabel("Clustering Coefficient")
+    plt.ylabel("Number of Nodes")
+    plt.show()
+
+    
+    
+def get_connected_components(G):
+    # identify the strongly connected components
+    strong_components = list(nx.strongly_connected_components(G))
+
+    # identify the weakly connected components
+    weak_components = list(nx.weakly_connected_components(G))
+
+    # return the results as a tuple
+    return strong_components, weak_components
+
+
+
+def get_connected_components_graph(graph, components):
+    # create a new graph for the connected components
+    CC = nx.DiGraph()
+
+    # add the nodes and edges from the original graph to the new graph
+    for component in components:
+        CC.add_nodes_from(component)
+        for u in component:
+            for v in graph.successors(u):
+                if v in component:
+                    CC.add_edge(u, v)
+
+    # return the connected components graph
+    return CC        
+
+
+
 # read csv
 df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
 
@@ -171,22 +245,26 @@ df_sub = df.sample(500, random_state=987)
 
 
 # build graph from data frame
-G = draw_graph(df_sub)
+G = make_graph(df_sub)
 
 
 # create graph from edges and plot
 nx.draw(G, with_labels=True, node_size=1000, alpha=0.5, arrows=True)
 plt.title('500 node subgraph')
 
-
-# calculate degrees
+# exercise 1
+# calculate degrees 
 in_deg, out_deg, avg_deg = get_degrees(G)
 # plot degrees
 #plot_degrees(in_deg, out_deg, avg_deg)
 
+
+# exercise 2
 # draw power-law figures
 draw_power_laws(in_deg, out_deg, avg_deg)
 
+
+# exercise 3
 loglogplot(in_deg)
 
 #degree_sequence = sorted((d for n, d in out_deg), reverse=True)
@@ -196,15 +274,44 @@ Calculating best minimal value for power law fit
 31.93026166420847%
 """
 
+
+# exercise 4
+# get top 5 edge betweenness scores
+#top_edges = top_edge_betweenness(G)
+#print("Top 5 edges with highest betweenness centrality:")
+#print(top_edges)
+
+
+# get top 10 node betweenness scores
+#top_nodes = top_node_betweenness(G)
+#print("Top 10 nodes with highest betweenness centrality:")
+#print(top_nodes)
+
+
+# exercise 5
+# clustering coefficient
+#plot_clustering_coefficient_distribution(G)
+
+
+# exercise 7
+# strongly and weakly connected components
+#strong_components, weak_components = get_connected_components(G)
+#print("Strongly connected components: ", strong_components)
+#print("Weakly connected components: ", weak_components)
+
+
+# exercise 8
+# subgraph from strongly connected components
+#CC = get_connected_components_graph(strong_components, G)
+
+# draw the connected components graph
+#pos = nx.spring_layout(CC)
+#nx.draw(CC, pos, with_labels=True)
+#nx.draw_networkx_edge_labels(CC, pos, edge_labels={(u,v):f"{u}->{v}" for u,v in CC.edges()})
+
+
+
 # show graph
 plt.show()
 
-quit()
-
-#edges_as_list = edg.values.tolist()
-#nodes_as_list = nod.values.tolist()
-#print(edges_as_list) 
-
-#graph=draw_graph(edges_as_list, nodes_as_list)
-# display graph
-#nx.draw_networkx(graph)
+#quit()
