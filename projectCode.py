@@ -144,6 +144,31 @@ def draw_power_laws(in_deg, out_deg, avg_deg):
 
 def loglogplot(in_deg):
     # calculate how many node have same degree
+    nodes = []
+    degrees = []
+
+    for i in range(len(in_deg)):
+        nodes.append(in_deg[i][0])
+        degrees.append(in_deg[i][1])
+    
+    degree_count = Counter(degrees)
+    
+    a, b = np.polyfit(list(degree_count.keys()), list(degree_count.values()), 1)
+     
+    fig1 = plt.figure("Degree log-log distribution", figsize=(8, 8))
+    ax1 = fig1.add_subplot()
+    degree_sequence = sorted((d for n, d in in_deg), reverse=True)
+    ax1.bar(*np.unique(degree_sequence, return_counts=True), align='center', width=0.4)
+    ax1.set_title("Degree log-log distribution")
+    ax1.set_xlabel("Degree")
+    ax1.set_ylabel("# of Nodes")
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.scatter(np.array(list(degree_count.keys())), np.array(list(degree_count.values())), alpha=0.95)
+    plt.plot(np.array(list(degree_count.keys())), int(a)*np.array(list(degree_count.values()))+int(b))
+    
+    
+    """
     in_deg_count = []
     nodes = []
     degree = []
@@ -157,12 +182,14 @@ def loglogplot(in_deg):
 
     # plot the figure
     plt.figure(5)
-    plt.loglog(in_deg_counter.keys(), in_deg_counter.values(), label="loglog")
+    plt.loglog(list(in_deg_counter.keys()), list(in_deg_counter.keys()), label="loglog")
+    plt.scatter(list(in_deg_counter.keys()), list(in_deg_counter.keys()), alpha=0.95, color ='b')
     plt.xlabel('Log(degree)')
     plt.ylabel('Log(number of nodes)')
     plt.title('LogLog Distribution of in-degree') 
     
     # linear regression
+    
     linear_regr = LinearRegression()
     x = np.reshape(list(in_deg_counter.keys()),(-1,1))
     y = np.reshape(list(in_deg_counter.values()),(-1,1))
@@ -174,7 +201,7 @@ def loglogplot(in_deg):
     plt.title('Linear regression of loglog distribution') 
     plt.scatter(x, y, alpha=0.95, color ='b')
     plt.plot(x, y_regr, color ='k')
-        
+    """
 
 def top_edge_betweenness(graph):
     #Calculates the top five edges with the highest edge betweenness scores
@@ -281,7 +308,6 @@ Calculating best minimal value for power law fit
 #print("Top 5 edges with highest betweenness centrality:")
 #print(top_edges)
 
-
 # get top 10 node betweenness scores
 #top_nodes = top_node_betweenness(G)
 #print("Top 10 nodes with highest betweenness centrality:")
@@ -315,3 +341,4 @@ Calculating best minimal value for power law fit
 plt.show()
 
 #quit()
+
