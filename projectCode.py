@@ -1,6 +1,7 @@
 import pandas as pd
 import statistics
 from scipy.stats import kurtosis
+from scipy.stats import linregress
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -142,67 +143,29 @@ def draw_power_laws(in_deg, out_deg, avg_deg):
     
 
 
-def loglogplot(in_deg):
+def loglogplot(avg_deg):
+    # average degree power law
+    avg_deg_count = []
+    
     # calculate how many node have same degree
-    nodes = []
-    degrees = []
-
-    for i in range(len(in_deg)):
-        nodes.append(in_deg[i][0])
-        degrees.append(in_deg[i][1])
+    for l in range(len(avg_deg)):
+        avg_deg_count.append(avg_deg[l][1])
     
-    degree_count = Counter(degrees)
-    
-    a, b = np.polyfit(list(degree_count.keys()), list(degree_count.values()), 1)
-     
-    fig1 = plt.figure("Degree log-log distribution", figsize=(8, 8))
-    ax1 = fig1.add_subplot()
-    degree_sequence = sorted((d for n, d in in_deg), reverse=True)
-    ax1.bar(*np.unique(degree_sequence, return_counts=True), align='center', width=0.4)
-    ax1.set_title("Degree log-log distribution")
-    ax1.set_xlabel("Degree")
-    ax1.set_ylabel("# of Nodes")
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.scatter(np.array(list(degree_count.keys())), np.array(list(degree_count.values())), alpha=0.95)
-    plt.plot(np.array(list(degree_count.keys())), int(a)*np.array(list(degree_count.values()))+int(b))
-    
-    
-    """
-    in_deg_count = []
-    nodes = []
-    degree = []
-   
-    for i in range(len(in_deg)):
-        in_deg_count.append(in_deg[i][1])
-        nodes.append(in_deg[i][0])
-        degree.append(in_deg[i][1])
-        
-    in_deg_counter = Counter(in_deg_count)
-
-    # plot the figure
+    # draw figure as loglog plot
+    avg_deg_counter = Counter(avg_deg_count)
     plt.figure(5)
-    plt.loglog(list(in_deg_counter.keys()), list(in_deg_counter.keys()), label="loglog")
-    plt.scatter(list(in_deg_counter.keys()), list(in_deg_counter.keys()), alpha=0.95, color ='b')
-    plt.xlabel('Log(degree)')
-    plt.ylabel('Log(number of nodes)')
-    plt.title('LogLog Distribution of in-degree') 
+    x_avg = np.array(list(avg_deg_counter.keys()))
+    y_avg = np.array(list(avg_deg_counter.values()))
+    plt.xscale("log")
+    plt.yscale("log")
     
-    # linear regression
-    
-    linear_regr = LinearRegression()
-    x = np.reshape(list(in_deg_counter.keys()),(-1,1))
-    y = np.reshape(list(in_deg_counter.values()),(-1,1))
-    linear_regr.fit(x, y)
-    y_regr = linear_regr.predict(y)
-    plt.figure(6)
+    plt.scatter(x_avg, y_avg, alpha=0.95)
+    plt.plot(x_avg, y_avg, label="avg")
     plt.xlabel('degree')
     plt.ylabel('number of nodes')
-    plt.title('Linear regression of loglog distribution') 
-    plt.scatter(x, y, alpha=0.95, color ='b')
-    plt.plot(x, y_regr, color ='k')
-    """
-
+    plt.title('Avg degree log-log plot')
+    
+    
 def top_edge_betweenness(graph):
     #Calculates the top five edges with the highest edge betweenness scores
     print("Edge betweenness")
@@ -292,7 +255,7 @@ draw_power_laws(in_deg, out_deg, avg_deg)
 
 
 # exercise 3
-loglogplot(in_deg)
+loglogplot(avg_deg)
 
 #degree_sequence = sorted((d for n, d in out_deg), reverse=True)
 #fit = powerlaw.Fit(degree_sequence)
