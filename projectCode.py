@@ -1,7 +1,6 @@
 import pandas as pd
 import statistics
 from scipy.stats import kurtosis
-from scipy.stats import linregress
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -143,29 +142,68 @@ def draw_power_laws(in_deg, out_deg, avg_deg):
     
 
 
-def loglogplot(avg_deg):
-    # average degree power law
-    avg_deg_count = []
-    
+def loglogplot(in_deg):
     # calculate how many node have same degree
-    for l in range(len(avg_deg)):
-        avg_deg_count.append(avg_deg[l][1])
     
-    # draw figure as loglog plot
-    avg_deg_counter = Counter(avg_deg_count)
-    plt.figure(5)
-    x_avg = np.array(list(avg_deg_counter.keys()))
-    y_avg = np.array(list(avg_deg_counter.values()))
-    plt.xscale("log")
+    nodes = []
+    degrees = []
+
+    for i in range(len(in_deg)):
+        nodes.append(in_deg[i][0])
+        degrees.append(in_deg[i][1])
+    
+    degree_count = Counter(degrees)
+    
+    a, b = np.polyfit(list(degree_count.keys()), list(degree_count.values()), 1)
+     
+    fig1 = plt.figure("Degree log-log distribution", figsize=(8, 8))
+    ax1 = fig1.add_subplot()
+    degree_sequence = sorted((d for n, d in in_deg), reverse=True)
+    ax1.bar(*np.unique(degree_sequence, return_counts=True), align='center', width=0.4)
+    ax1.set_title("Degree log-log distribution")
+    ax1.set_xlabel("Degree")
+    ax1.set_ylabel("# of Nodes")
     plt.yscale("log")
+    plt.xscale("log")
+    plt.scatter(np.array(list(degree_count.keys())), np.array(list(degree_count.values())), alpha=0.95)
+    plt.plot(np.array(list(degree_count.keys())), int(a)*np.array(list(degree_count.values()))+int(b))
+    """
     
-    plt.scatter(x_avg, y_avg, alpha=0.95)
-    plt.plot(x_avg, y_avg, label="avg")
+    
+    in_deg_count = []
+    nodes = []
+    degree = []
+   
+    for i in range(len(in_deg)):
+        in_deg_count.append(in_deg[i][1])
+        nodes.append(in_deg[i][0])
+        degree.append(in_deg[i][1])
+        
+    in_deg_counter = Counter(in_deg_count)
+
+    # plot the figure
+    plt.figure(5)
+    plt.loglog(list(in_deg_counter.keys()), list(in_deg_counter.keys()), label="loglog")
+    plt.scatter(list(in_deg_counter.keys()), list(in_deg_counter.keys()), alpha=0.95, color ='b')
+    plt.xlabel('Log(degree)')
+    plt.ylabel('Log(number of nodes)')
+    plt.title('LogLog Distribution of in-degree') 
+    
+    # linear regression
+    
+    linear_regr = LinearRegression()
+    x = np.reshape(list(in_deg_counter.keys()),(-1,1))
+    y = np.reshape(list(in_deg_counter.values()),(-1,1))
+    linear_regr.fit(x, y)
+    y_regr = linear_regr.predict(y)
+    plt.figure(6)
     plt.xlabel('degree')
     plt.ylabel('number of nodes')
-    plt.title('Avg degree log-log plot')
-    
-    
+    plt.title('Linear regression of loglog distribution') 
+    plt.scatter(x, y, alpha=0.95, color ='b')
+    plt.plot(x, y_regr, color ='k')
+    """
+
 def top_edge_betweenness(graph):
     #Calculates the top five edges with the highest edge betweenness scores
     print("Edge betweenness")
@@ -199,6 +237,7 @@ def plot_clustering_coefficient_distribution(graph, num_bins=10):
     
 def get_connected_components(G):
     # identify the strongly connected components
+    
     strong_components = list(nx.strongly_connected_components(G))
 
     # identify the weakly connected components
@@ -222,9 +261,22 @@ def get_connected_components_graph(graph, components):
                     CC.add_edge(u, v)
 
     # return the connected components graph
-    return CC        
+    return CC       
 
 
+def connected_with_distance (graph, components):
+    # new graph for the connected components
+    CC = nx.DiGraph()
+    
+    for component in components:
+        paths = []
+        for node in component:
+            #for checkComp in components:
+                #for checkNode in checkComp:
+            paths = nx.shortest_path(graph, node)
+            print(paths)
+
+            
 
 # read csv
 df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
@@ -239,8 +291,8 @@ G = make_graph(df_sub)
 
 
 # create graph from edges and plot
-nx.draw(G, with_labels=True, node_size=1000, alpha=0.5, arrows=True)
-plt.title('500 node subgraph')
+#nx.draw(G, with_labels=True, node_size=1000, alpha=0.5, arrows=True)
+#plt.title('500 node subgraph')
 
 # exercise 1
 # calculate degrees 
@@ -251,11 +303,11 @@ in_deg, out_deg, avg_deg = get_degrees(G)
 
 # exercise 2
 # draw power-law figures
-draw_power_laws(in_deg, out_deg, avg_deg)
+#draw_power_laws(in_deg, out_deg, avg_deg)
 
 
 # exercise 3
-loglogplot(avg_deg)
+#loglogplot(in_deg)
 
 #degree_sequence = sorted((d for n, d in out_deg), reverse=True)
 #fit = powerlaw.Fit(degree_sequence)
@@ -284,20 +336,45 @@ Calculating best minimal value for power law fit
 
 # exercise 7
 # strongly and weakly connected components
-#strong_components, weak_components = get_connected_components(G)
+strong_components, weak_components = get_connected_components(G)
+
 #print("Strongly connected components: ", strong_components)
 #print("Weakly connected components: ", weak_components)
+print("Number of strongly connected components: ", len(strong_components))
+print("Number of weakly connected components: ", len(weak_components))
 
 
 # exercise 8
 # subgraph from strongly connected components
-#CC = get_connected_components_graph(strong_components, G)
+#CC = get_connected_components_graph(G, strong_components)
+
+#S = (G.subgraph(c) for c in nx.strongly_connected_components(G))
+
+#for c in nx.strongly_connected_components(G):
+#    nx.draw(G.subgraph(c))
+
+strongs = sorted(nx.strongly_connected_components(G), key=len, reverse=True)
+print(strongs)
+#for strong in strongs:
+#    print(G.subgraph(strong).edges())
+
+
+#for c in nx.strongly_connected_components(G):
+    
+
+#for s in S:
+#    print(s)
+#    nx.draw(s)
+
 
 # draw the connected components graph
 #pos = nx.spring_layout(CC)
 #nx.draw(CC, pos, with_labels=True)
 #nx.draw_networkx_edge_labels(CC, pos, edge_labels={(u,v):f"{u}->{v}" for u,v in CC.edges()})
 
+# exercise 9
+
+#connected_with_distance(G, strong_components)
 
 
 # show graph
