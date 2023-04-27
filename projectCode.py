@@ -11,7 +11,6 @@ from sklearn import preprocessing, svm
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
-
 # read data
 
 def get_twitter_data():
@@ -141,68 +140,29 @@ def draw_power_laws(in_deg, out_deg, avg_deg):
     plt.title('Avg degree power-law distribution')
     
 
-
-def loglogplot(in_deg):
+def loglogplot(avg_deg):
+    # average degree power law
+    avg_deg_count = []
+    
     # calculate how many node have same degree
+    for l in range(len(avg_deg)):
+        avg_deg_count.append(avg_deg[l][1])
     
-    nodes = []
-    degrees = []
-
-    for i in range(len(in_deg)):
-        nodes.append(in_deg[i][0])
-        degrees.append(in_deg[i][1])
-    
-    degree_count = Counter(degrees)
-    
-    a, b = np.polyfit(list(degree_count.keys()), list(degree_count.values()), 1)
-     
-    fig1 = plt.figure("Degree log-log distribution", figsize=(8, 8))
-    ax1 = fig1.add_subplot()
-    degree_sequence = sorted((d for n, d in in_deg), reverse=True)
-    ax1.bar(*np.unique(degree_sequence, return_counts=True), align='center', width=0.4)
-    ax1.set_title("Degree log-log distribution")
-    ax1.set_xlabel("Degree")
-    ax1.set_ylabel("# of Nodes")
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.scatter(np.array(list(degree_count.keys())), np.array(list(degree_count.values())), alpha=0.95)
-    plt.plot(np.array(list(degree_count.keys())), int(a)*np.array(list(degree_count.values()))+int(b))
-    """
-    
-    
-    in_deg_count = []
-    nodes = []
-    degree = []
-   
-    for i in range(len(in_deg)):
-        in_deg_count.append(in_deg[i][1])
-        nodes.append(in_deg[i][0])
-        degree.append(in_deg[i][1])
-        
-    in_deg_counter = Counter(in_deg_count)
-
-    # plot the figure
+    # draw figure as loglog plot
+    avg_deg_counter = Counter(avg_deg_count)
     plt.figure(5)
-    plt.loglog(list(in_deg_counter.keys()), list(in_deg_counter.keys()), label="loglog")
-    plt.scatter(list(in_deg_counter.keys()), list(in_deg_counter.keys()), alpha=0.95, color ='b')
-    plt.xlabel('Log(degree)')
-    plt.ylabel('Log(number of nodes)')
-    plt.title('LogLog Distribution of in-degree') 
+    x_avg = np.array(list(avg_deg_counter.keys()))
+    y_avg = np.array(list(avg_deg_counter.values()))
+    plt.xscale("log")
+    plt.yscale("log")
     
-    # linear regression
-    
-    linear_regr = LinearRegression()
-    x = np.reshape(list(in_deg_counter.keys()),(-1,1))
-    y = np.reshape(list(in_deg_counter.values()),(-1,1))
-    linear_regr.fit(x, y)
-    y_regr = linear_regr.predict(y)
-    plt.figure(6)
+    plt.scatter(x_avg, y_avg, alpha=0.95)
+    plt.plot(x_avg, y_avg, label="avg")
     plt.xlabel('degree')
     plt.ylabel('number of nodes')
-    plt.title('Linear regression of loglog distribution') 
-    plt.scatter(x, y, alpha=0.95, color ='b')
-    plt.plot(x, y_regr, color ='k')
-    """
+    plt.title('Avg degree log-log plot')
+    
+    
 
 def top_edge_betweenness(graph):
     #Calculates the top five edges with the highest edge betweenness scores
@@ -264,17 +224,35 @@ def get_connected_components_graph(graph, components):
     return CC       
 
 
-def connected_with_distance (graph, components):
-    # new graph for the connected components
-    CC = nx.DiGraph()
+
+
+def connected_sccs_distance(sccs, graph):
     
-    for component in components:
-        paths = []
-        for node in component:
-            #for checkComp in components:
-                #for checkNode in checkComp:
-            paths = nx.shortest_path(graph, node)
-            print(paths)
+    # Compute the shortest path lengths between all pairs of nodes
+    shortest_paths = dict(nx.all_pairs_shortest_path_length(graph))
+
+    # Build a set of all nodes in each SCC
+    scc_nodes = [set(scc) for scc in sccs]
+
+    # Build a set of all SCCs that are connected by a path of length up to 10
+    connected_sccs = set()
+    for i, scc1 in enumerate(sccs):
+        for j, scc2 in enumerate(sccs):
+            if i >= j:
+                continue
+            if any(shortest_paths.get(node1, {}).get(node2, float('inf')) <= 10 for node1 in scc1 for node2 in scc2):
+                connected_sccs.add((i, j))
+
+    # Build a new graph where each node represents a connected SCC
+    group_graph = nx.DiGraph()
+    for i, scc in enumerate(sccs):
+        group_graph.add_node(i)
+
+    # Add edges between SCCs that are connected
+    for i, j in connected_sccs:
+        group_graph.add_edge(i, j)
+
+    return group_graph
 
             
 
@@ -283,16 +261,17 @@ df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
 
 
 # select subset
-df_sub = df.sample(500, random_state=987)
+df_sub = df.sample(1000, random_state=987)
 
 
 # build graph from data frame
 G = make_graph(df_sub)
 
-
 # create graph from edges and plot
 #nx.draw(G, with_labels=True, node_size=1000, alpha=0.5, arrows=True)
 #plt.title('500 node subgraph')
+
+
 
 # exercise 1
 # calculate degrees 
@@ -307,14 +286,8 @@ in_deg, out_deg, avg_deg = get_degrees(G)
 
 
 # exercise 3
-#loglogplot(in_deg)
+#loglogplot(avg_deg)
 
-#degree_sequence = sorted((d for n, d in out_deg), reverse=True)
-#fit = powerlaw.Fit(degree_sequence)
-"""
-Calculating best minimal value for power law fit
-31.93026166420847%
-"""
 
 
 # exercise 4
@@ -345,26 +318,9 @@ print("Number of weakly connected components: ", len(weak_components))
 
 
 # exercise 8
+
 # subgraph from strongly connected components
-#CC = get_connected_components_graph(G, strong_components)
-
-#S = (G.subgraph(c) for c in nx.strongly_connected_components(G))
-
-#for c in nx.strongly_connected_components(G):
-#    nx.draw(G.subgraph(c))
-
-strongs = sorted(nx.strongly_connected_components(G), key=len, reverse=True)
-print(strongs)
-#for strong in strongs:
-#    print(G.subgraph(strong).edges())
-
-
-#for c in nx.strongly_connected_components(G):
-    
-
-#for s in S:
-#    print(s)
-#    nx.draw(s)
+CC = get_connected_components_graph(G, strong_components)
 
 
 # draw the connected components graph
@@ -373,8 +329,8 @@ print(strongs)
 #nx.draw_networkx_edge_labels(CC, pos, edge_labels={(u,v):f"{u}->{v}" for u,v in CC.edges()})
 
 # exercise 9
-
-#connected_with_distance(G, strong_components)
+distance_graph = connected_sccs_distance(list(strong_components), G)
+nx.draw(distance_graph)
 
 
 # show graph
