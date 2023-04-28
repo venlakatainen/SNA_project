@@ -193,6 +193,20 @@ def plot_clustering_coefficient_distribution(graph, num_bins=10):
     plt.ylabel("Number of Nodes")
     plt.show()
 
+
+    
+def plot_clustering_loglog_distribution(graph, num_bins=10):
+    # compute the clustering coefficient for each node
+    clustering = nx.clustering(graph)
+    print(clustering)
+    # create a histogram with the specified number of bins
+    plt.hist(list(clustering.values()), bins=num_bins)
+    plt.title("Power-Law Distribution of Clustering Coefficients")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("Clustering Coefficient")
+    plt.ylabel("Number of Nodes")
+    plt.show()    
     
     
 def get_connected_components(G):
@@ -261,7 +275,7 @@ df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
 
 
 # select subset
-df_sub = df.sample(1000, random_state=987)
+df_sub = df.sample(10000, random_state=987)
 
 
 # build graph from data frame
@@ -304,8 +318,11 @@ in_deg, out_deg, avg_deg = get_degrees(G)
 
 # exercise 5
 # clustering coefficient
-#plot_clustering_coefficient_distribution(G)
+plot_clustering_coefficient_distribution(G)
 
+# exercise 6
+# clustering coefficient power-law
+plot_clustering_loglog_distribution(G)
 
 # exercise 7
 # strongly and weakly connected components
@@ -320,7 +337,7 @@ print("Number of weakly connected components: ", len(weak_components))
 # exercise 8
 
 # subgraph from strongly connected components
-CC = get_connected_components_graph(G, strong_components)
+#CC = get_connected_components_graph(G, strong_components)
 
 
 # draw the connected components graph
@@ -329,12 +346,14 @@ CC = get_connected_components_graph(G, strong_components)
 #nx.draw_networkx_edge_labels(CC, pos, edge_labels={(u,v):f"{u}->{v}" for u,v in CC.edges()})
 
 # exercise 9
-distance_graph = connected_sccs_distance(list(strong_components), G)
-nx.draw(distance_graph)
+#distance_graph = connected_sccs_distance(list(strong_components), G)
+#nx.draw(distance_graph)
 
 
 # show graph
 plt.show()
 
 #quit()
+
+
 
