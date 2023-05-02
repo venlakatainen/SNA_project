@@ -251,11 +251,12 @@ in_deg, out_deg, avg_deg = get_degrees(G)
 
 # exercise 2
 # draw power-law figures
-draw_power_laws(in_deg, out_deg, avg_deg)
+#draw_power_laws(in_deg, out_deg, avg_deg)
 
 
 # exercise 3
-loglogplot(avg_deg)
+#draw a log-log plot of the degree distribution
+#loglogplot(avg_deg)
 
 #degree_sequence = sorted((d for n, d in out_deg), reverse=True)
 #fit = powerlaw.Fit(degree_sequence)
@@ -267,14 +268,14 @@ Calculating best minimal value for power law fit
 
 # exercise 4
 # get top 5 edge betweenness scores
-#top_edges = top_edge_betweenness(G)
-#print("Top 5 edges with highest betweenness centrality:")
-#print(top_edges)
+top_edges = top_edge_betweenness(G)
+print("Top 5 edges with highest betweenness centrality:")
+print(top_edges)
 
 # get top 10 node betweenness scores
-#top_nodes = top_node_betweenness(G)
-#print("Top 10 nodes with highest betweenness centrality:")
-#print(top_nodes)
+top_nodes = top_node_betweenness(G)
+print("Top 10 nodes with highest betweenness centrality:")
+print(top_nodes)
 
 
 # exercise 5
