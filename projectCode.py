@@ -1,7 +1,6 @@
 import pandas as pd
 import statistics
 from scipy.stats import kurtosis
-from scipy.stats import linregress
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +10,6 @@ from collections import Counter
 from sklearn import preprocessing, svm
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-
 
 # read data
 
@@ -142,7 +140,6 @@ def draw_power_laws(in_deg, out_deg, avg_deg):
     plt.title('Avg degree power-law distribution')
     
 
-
 def loglogplot(avg_deg):
     # average degree power law
     avg_deg_count = []
@@ -166,6 +163,7 @@ def loglogplot(avg_deg):
     plt.title('Avg degree log-log plot')
     
     
+
 def top_edge_betweenness(graph):
     #Calculates the top five edges with the highest edge betweenness scores
     print("Edge betweenness")
@@ -195,10 +193,25 @@ def plot_clustering_coefficient_distribution(graph, num_bins=10):
     plt.ylabel("Number of Nodes")
     plt.show()
 
+
+    
+def plot_clustering_loglog_distribution(graph, num_bins=10):
+    # compute the clustering coefficient for each node
+    clustering = nx.clustering(graph)
+    print(clustering)
+    # create a histogram with the specified number of bins
+    plt.hist(list(clustering.values()), bins=num_bins)
+    plt.title("Power-Law Distribution of Clustering Coefficients")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("Clustering Coefficient")
+    plt.ylabel("Number of Nodes")
+    plt.show()    
     
     
 def get_connected_components(G):
     # identify the strongly connected components
+    
     strong_components = list(nx.strongly_connected_components(G))
 
     # identify the weakly connected components
@@ -222,25 +235,57 @@ def get_connected_components_graph(graph, components):
                     CC.add_edge(u, v)
 
     # return the connected components graph
-    return CC        
+    return CC       
 
 
+
+
+def connected_sccs_distance(sccs, graph):
+    
+    # Compute the shortest path lengths between all pairs of nodes
+    shortest_paths = dict(nx.all_pairs_shortest_path_length(graph))
+
+    # Build a set of all nodes in each SCC
+    scc_nodes = [set(scc) for scc in sccs]
+
+    # Build a set of all SCCs that are connected by a path of length up to 10
+    connected_sccs = set()
+    for i, scc1 in enumerate(sccs):
+        for j, scc2 in enumerate(sccs):
+            if i >= j:
+                continue
+            if any(shortest_paths.get(node1, {}).get(node2, float('inf')) <= 10 for node1 in scc1 for node2 in scc2):
+                connected_sccs.add((i, j))
+
+    # Build a new graph where each node represents a connected SCC
+    group_graph = nx.DiGraph()
+    for i, scc in enumerate(sccs):
+        group_graph.add_node(i)
+
+    # Add edges between SCCs that are connected
+    for i, j in connected_sccs:
+        group_graph.add_edge(i, j)
+
+    return group_graph
+
+            
 
 # read csv
 df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
 
 
 # select subset
-df_sub = df.sample(500, random_state=987)
+df_sub = df.sample(10000, random_state=987)
 
 
 # build graph from data frame
 G = make_graph(df_sub)
 
-
 # create graph from edges and plot
-nx.draw(G, with_labels=True, node_size=1000, alpha=0.5, arrows=True)
-plt.title('500 node subgraph')
+#nx.draw(G, with_labels=True, node_size=1000, alpha=0.5, arrows=True)
+#plt.title('500 node subgraph')
+
+
 
 # exercise 1
 # calculate degrees 
@@ -251,18 +296,12 @@ in_deg, out_deg, avg_deg = get_degrees(G)
 
 # exercise 2
 # draw power-law figures
-draw_power_laws(in_deg, out_deg, avg_deg)
+#draw_power_laws(in_deg, out_deg, avg_deg)
 
 
 # exercise 3
-loglogplot(avg_deg)
+#loglogplot(avg_deg)
 
-#degree_sequence = sorted((d for n, d in out_deg), reverse=True)
-#fit = powerlaw.Fit(degree_sequence)
-"""
-Calculating best minimal value for power law fit
-31.93026166420847%
-"""
 
 
 # exercise 4
@@ -279,29 +318,42 @@ Calculating best minimal value for power law fit
 
 # exercise 5
 # clustering coefficient
-#plot_clustering_coefficient_distribution(G)
+plot_clustering_coefficient_distribution(G)
 
+# exercise 6
+# clustering coefficient power-law
+plot_clustering_loglog_distribution(G)
 
 # exercise 7
 # strongly and weakly connected components
-#strong_components, weak_components = get_connected_components(G)
+strong_components, weak_components = get_connected_components(G)
+
 #print("Strongly connected components: ", strong_components)
 #print("Weakly connected components: ", weak_components)
+print("Number of strongly connected components: ", len(strong_components))
+print("Number of weakly connected components: ", len(weak_components))
 
 
 # exercise 8
+
 # subgraph from strongly connected components
-#CC = get_connected_components_graph(strong_components, G)
+#CC = get_connected_components_graph(G, strong_components)
+
 
 # draw the connected components graph
 #pos = nx.spring_layout(CC)
 #nx.draw(CC, pos, with_labels=True)
 #nx.draw_networkx_edge_labels(CC, pos, edge_labels={(u,v):f"{u}->{v}" for u,v in CC.edges()})
 
+# exercise 9
+#distance_graph = connected_sccs_distance(list(strong_components), G)
+#nx.draw(distance_graph)
 
 
 # show graph
 plt.show()
 
 #quit()
+
+
 
