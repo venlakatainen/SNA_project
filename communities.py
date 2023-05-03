@@ -21,9 +21,10 @@ import pylab
 df = pd.read_csv('edges.csv', header=None, names=['Follower','Target'])
 
 #put the node id of the node with the highest node betweenness here
-#node = 4018
+node = 4018
 
 #Subset
+#df = df[node - 2000 : node + 2000]
 df = df[0 : 10000]
 
 #Creating the graph
